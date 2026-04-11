@@ -1,0 +1,311 @@
+# Trigger-based sensors - In configuration.yaml I have 'template: !include_dir_merge_list templates/'
+## weather.kpdx is NWS, forecast_home is met.no
+- trigger:
+    - platform: time_pattern
+      hours: "/2"  # Update every 2 hours
+    - platform: homeassistant
+      event: start
+  action:
+    - service: weather.get_forecasts
+      data:
+        type: daily
+      target:
+        entity_id: weather.forecast_home
+      response_variable: daily
+  sensor:
+    - name: "Forecast High"
+      unique_id: forecast_high
+      state: "{{ daily['weather.forecast_home'].forecast[0].temperature }}"
+      unit_of_measurement: "°F"
+      
+    - name: "Forecast Low"
+      unique_id: forecast_low
+      state: "{{ daily['weather.forecast_home'].forecast[0].templow }}"
+      unit_of_measurement: "°F"
+
+    - name: "Forecast Day 0 Precip Inches"
+      unique_id: forecast_day0_precip_inches
+      state: "{{ daily['weather.forecast_home'].forecast[0].precipitation | round(1) }}"
+      unit_of_measurement: "in"
+      device_class: precipitation
+      
+# Regular template sensors (updates on state change)
+- sensor:
+    - name: "Forecast Current Temp"
+      unique_id: forecast_current_temp
+      state: "{{ state_attr('weather.forecast_home', 'temperature') }}"
+      unit_of_measurement: "°F"
+      
+    - name: "Forecast Current Wind"
+      unique_id: forecast_current_wind
+      state: "{{ state_attr('weather.forecast_home', 'wind_speed') | round(0) }}"
+      unit_of_measurement: "mph"
+      
+    - name: "Forecast Condition"
+      unique_id: forecast_condition
+      state: "{{ states('weather.forecast_home') }}"
+
+    - name: "Forecast Condition Name"
+      unique_id: forecast_condition_name
+      state: >
+        {% set condition = states('weather.forecast_home') %}
+        {% if condition == 'partlycloudy' %}Partly Cloudy
+        {% elif condition == 'cloudy' %}Cloudy
+        {% elif condition == 'sunny' %}Sunny
+        {% elif condition == 'clear-night' %}Clear
+        {% elif condition == 'rainy' %}Rainy
+        {% elif condition == 'snowy' %}Snowy
+        {% elif condition == 'fog' %}Foggy
+        {% elif condition == 'windy' %}Windy
+        {% elif condition == 'pouring' %}Pouring
+        {% elif condition == 'lightning' %}Lightning
+        {% elif condition == 'lightning-rainy' %}Lightning & Rain
+        {% elif condition == 'hail' %}Hail
+        {% elif condition == 'snowy-rainy' %}Snowy & Rainy
+        {% else %}{{ condition | title }}
+        {% endif %}
+
+- sensor:
+    - name: "Forecast Day 0 Date"
+      unique_id: forecast_day0_date
+      state: "{{ now().strftime('%a') }}"  # Shows "Fri", "Sat", etc.
+    
+    - name: "Forecast Day 1 Date"
+      unique_id: forecast_day1_date
+      state: "{{ (now() + timedelta(days=1)).strftime('%a') }}"
+    
+    - name: "Forecast Day 2 Date"
+      unique_id: forecast_day2_date
+      state: "{{ (now() + timedelta(days=2)).strftime('%a') }}"
+    
+    - name: "Forecast Day 3 Date"
+      unique_id: forecast_day3_date
+      state: "{{ (now() + timedelta(days=3)).strftime('%a') }}"
+    
+    - name: "Forecast Day 4 Date"
+      unique_id: forecast_day4_date
+      state: "{{ (now() + timedelta(days=4)).strftime('%a') }}"
+     
+
+# Multi-day forecast sensors
+- trigger:
+    - platform: time_pattern
+      hours: "/1"
+    - platform: homeassistant
+      event: start
+  action:
+    - service: weather.get_forecasts
+      data:
+        type: daily
+      target:
+        entity_id: weather.forecast_home
+      response_variable: daily
+  sensor:
+    # Day 1 (Tomorrow)
+    - name: "Forecast Day 1 High"
+      unique_id: forecast_day1_high
+      state: "{{ daily['weather.forecast_home'].forecast[1].temperature }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 1 Low"
+      unique_id: forecast_day1_low
+      state: "{{ daily['weather.forecast_home'].forecast[1].templow }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 1 Condition"
+      unique_id: forecast_day1_condition
+      state: "{{ daily['weather.forecast_home'].forecast[1].condition }}"
+      
+    - name: "Forecast Day 1 Precip Inches"
+      unique_id: forecast_day1_precip_inches
+      state: "{{ daily['weather.forecast_home'].forecast[1].precipitation | round(1) }}"
+      unit_of_measurement: "in"
+      device_class: precipitation
+    
+    # Day 2 
+    - name: "Forecast Day 2 High"
+      unique_id: forecast_day2_high
+      state: "{{ daily['weather.forecast_home'].forecast[2].temperature }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 2 Low"
+      unique_id: forecast_day2_low
+      state: "{{ daily['weather.forecast_home'].forecast[2].templow }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 2 Condition"
+      unique_id: forecast_day2_condition
+      state: "{{ daily['weather.forecast_home'].forecast[2].condition }}"
+      
+    - name: "Forecast Day 2 Precip Inches"
+      unique_id: forecast_day2_precip_inches
+      state: "{{ daily['weather.forecast_home'].forecast[2].precipitation | round(1) }}"
+      unit_of_measurement: "in"
+      device_class: precipitation
+    
+    # Day 3
+    - name: "Forecast Day 3 High"
+      unique_id: forecast_day3_high
+      state: "{{ daily['weather.forecast_home'].forecast[3].temperature }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 3 Low"
+      unique_id: forecast_day3_low
+      state: "{{ daily['weather.forecast_home'].forecast[3].templow }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 3 Condition"
+      unique_id: forecast_day3_condition
+      state: "{{ daily['weather.forecast_home'].forecast[3].condition }}"
+      
+    - name: "Forecast Day 3 Precip Inches"
+      unique_id: forecast_day3_precip_inches
+      state: "{{ daily['weather.forecast_home'].forecast[3].precipitation | round(1) }}"
+      unit_of_measurement: "in"
+      device_class: precipitation
+    
+    # Day 4
+    - name: "Forecast Day 4 High"
+      unique_id: forecast_day4_high
+      state: "{{ daily['weather.forecast_home'].forecast[4].temperature }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 4 Low"
+      unique_id: forecast_day4_low
+      state: "{{ daily['weather.forecast_home'].forecast[4].templow }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 4 Condition"
+      unique_id: forecast_day4_condition
+      state: "{{ daily['weather.forecast_home'].forecast[4].condition }}"
+      
+    - name: "Forecast Day 4 Precip Inches"
+      unique_id: forecast_day4_precip_inches
+      state: "{{ daily['weather.forecast_home'].forecast[4].precipitation | round(1) }}"
+      unit_of_measurement: "in"
+      device_class: precipitation
+    
+    # Day 5
+    - name: "Forecast Day 5 High"
+      unique_id: forecast_day5_high
+      state: "{{ daily['weather.forecast_home'].forecast[5].temperature }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 5 Low"
+      unique_id: forecast_day5_low
+      state: "{{ daily['weather.forecast_home'].forecast[5].templow }}"
+      unit_of_measurement: "°F"
+    
+    - name: "Forecast Day 5 Condition"
+      unique_id: forecast_day5_condition
+      state: "{{ daily['weather.forecast_home'].forecast[5].condition }}"
+      
+    - name: "Forecast Day 5 Precip Inches"
+      unique_id: forecast_day5_precip_inches
+      state: "{{ daily['weather.forecast_home'].forecast[5].precipitation | round(1) }}"
+      unit_of_measurement: "in"
+      device_class: precipitation
+      
+# Precipitation chance - comes from NWS instead of met.no
+- trigger:
+    - platform: time_pattern
+      hours: "/1"
+    - platform: homeassistant
+      event: start
+  action:
+    - service: weather.get_forecasts
+      data:
+        type: twice_daily
+      target:
+        entity_id: weather.kpdx
+      response_variable: forecast_data
+  sensor:
+    # Day 0 (Today - all entries matching today's date)
+    - name: "Forecast Day 0 Precip Chance"
+      unique_id: forecast_day0_precip_chance
+      state: >
+        {% set ns = namespace(today_precip=[]) %}
+        {% set today = now().date() %}
+        {% for item in forecast_data['weather.kpdx'].forecast %}
+          {% set forecast_date = (item.datetime | as_datetime).date() %}
+          {% if forecast_date == today %}
+            {% set ns.today_precip = ns.today_precip + [item.precipitation_probability | float(0)] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.today_precip | max if ns.today_precip else 0 }}
+      unit_of_measurement: "%"
+    
+    # Day 1 (Tomorrow)
+    - name: "Forecast Day 1 Precip Chance"
+      unique_id: forecast_day1_precip_chance
+      state: >
+        {% set ns = namespace(precip=[]) %}
+        {% set target_date = (now() + timedelta(days=1)).date() %}
+        {% for item in forecast_data['weather.kpdx'].forecast %}
+          {% set forecast_date = (item.datetime | as_datetime).date() %}
+          {% if forecast_date == target_date %}
+            {% set ns.precip = ns.precip + [item.precipitation_probability | float(0)] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.precip | max if ns.precip else 0 }}
+      unit_of_measurement: "%"
+    
+    # Day 2
+    - name: "Forecast Day 2 Precip Chance"
+      unique_id: forecast_day2_precip_chance
+      state: >
+        {% set ns = namespace(precip=[]) %}
+        {% set target_date = (now() + timedelta(days=2)).date() %}
+        {% for item in forecast_data['weather.kpdx'].forecast %}
+          {% set forecast_date = (item.datetime | as_datetime).date() %}
+          {% if forecast_date == target_date %}
+            {% set ns.precip = ns.precip + [item.precipitation_probability | float(0)] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.precip | max if ns.precip else 0 }}
+      unit_of_measurement: "%"
+    
+    # Day 3
+    - name: "Forecast Day 3 Precip Chance"
+      unique_id: forecast_day3_precip_chance
+      state: >
+        {% set ns = namespace(precip=[]) %}
+        {% set target_date = (now() + timedelta(days=3)).date() %}
+        {% for item in forecast_data['weather.kpdx'].forecast %}
+          {% set forecast_date = (item.datetime | as_datetime).date() %}
+          {% if forecast_date == target_date %}
+            {% set ns.precip = ns.precip + [item.precipitation_probability | float(0)] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.precip | max if ns.precip else 0 }}
+      unit_of_measurement: "%"
+    
+    # Day 4
+    - name: "Forecast Day 4 Precip Chance"
+      unique_id: forecast_day4_precip_chance
+      state: >
+        {% set ns = namespace(precip=[]) %}
+        {% set target_date = (now() + timedelta(days=4)).date() %}
+        {% for item in forecast_data['weather.kpdx'].forecast %}
+          {% set forecast_date = (item.datetime | as_datetime).date() %}
+          {% if forecast_date == target_date %}
+            {% set ns.precip = ns.precip + [item.precipitation_probability | float(0)] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.precip | max if ns.precip else 0 }}
+      unit_of_measurement: "%"
+    
+    # Day 5
+    - name: "Forecast Day 5 Precip Chance"
+      unique_id: forecast_day5_precip_chance
+      state: >
+        {% set ns = namespace(precip=[]) %}
+        {% set target_date = (now() + timedelta(days=5)).date() %}
+        {% for item in forecast_data['weather.kpdx'].forecast %}
+          {% set forecast_date = (item.datetime | as_datetime).date() %}
+          {% if forecast_date == target_date %}
+            {% set ns.precip = ns.precip + [item.precipitation_probability | float(0)] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.precip | max if ns.precip else 0 }}
+      unit_of_measurement: "%"
